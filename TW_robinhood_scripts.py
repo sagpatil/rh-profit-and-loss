@@ -1,22 +1,8 @@
-import pandas as pd
 import requests
-import time
-import datetime
-import numpy as np
-import sys
-import pytz
-import random
-import json
-import csv
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn', to silence the errors about copy
-import Robinhood
-
 
 ### ORDER HISTORY STUFF ###
-
-def fetch_json_by_url(my_trader, url):
-    return my_trader.session.get(url).json()
 
 def get_symbol_from_instrument_url(url, df):
 
@@ -31,7 +17,7 @@ def get_symbol_from_instrument_url(url, df):
    
     return symbol, df
 
-def order_item_info(order, my_trader, df):
+def order_item_info(order, df):
     #side: .side,  price: .average_price, shares: .cumulative_quantity, instrument: .instrument, date : .last_transaction_at
     symbol, df = get_symbol_from_instrument_url(order['instrument'], df)
     
@@ -50,20 +36,6 @@ def order_item_info(order, my_trader, df):
 
     return order_info_dict
 
-def get_all_history_orders(my_trader):
-    
-    orders = []
-    past_orders = my_trader.order_history()
-    orders.extend(past_orders['results'])
-
-    while past_orders['next']:
-        # print("{} order fetched".format(len(orders)))
-        next_url = past_orders['next']
-        past_orders = fetch_json_by_url(my_trader, next_url)
-        orders.extend(past_orders['results'])
-    # print("{} order fetched".format(len(orders)))
-
-    return orders
 
 def mark_pending_orders(row):
     if row.state == 'queued' or row.state == 'confirmed':
@@ -73,16 +45,17 @@ def mark_pending_orders(row):
     return order_status_is_pending
 # df_order_history.apply(mark_pending_orders, axis=1)    
 
+
 def get_order_history(my_trader):
     
     # Get unfiltered list of order history
-    past_orders = get_all_history_orders(my_trader)
+    past_orders = my_trader.get_all_orders()
 
     # Load in our pickled database of instrument-url lookups
     instruments_df = pd.read_pickle('symbol_and_instrument_urls')
 
     # Create a big dict of order history
-    orders = [order_item_info(order, my_trader, instruments_df) for order in past_orders]
+    orders = [order_item_info(order, instruments_df) for order in past_orders]
 
     # Save our pickled database of instrument-url lookups
     instruments_df.to_pickle('symbol_and_instrument_urls')
@@ -97,30 +70,17 @@ def get_order_history(my_trader):
 
     return df, instruments_df
 
-def get_all_history_options_orders(my_trader):
 
-    options_orders = []
-    past_options_orders = my_trader.options_order_history()
-    options_orders.extend(past_options_orders['results'])
+def get_all_history_options_orders(r):
 
-    while past_options_orders['next']:
-        # print("{} order fetched".format(len(orders)))
-        next_url = past_options_orders['next']
-        past_options_orders = fetch_json_by_url(my_trader, next_url)
-        options_orders.extend(past_options_orders['results'])
-    # print("{} order fetched".format(len(orders)))
-    
+    options_orders = r.get_market_options()
+
     options_orders_cleaned = []
     
     for each in options_orders:
         if float(each['processed_premium']) < 1:
             continue
         else:
-#             print(each['chain_symbol'])
-#             print(each['processed_premium'])
-#             print(each['created_at'])
-#             print(each['legs'][0]['position_effect'])
-#             print("~~~")
             if each['legs'][0]['position_effect'] == 'open':
                 value = round(float(each['processed_premium']), 2)*-1
             else:

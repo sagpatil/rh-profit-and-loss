@@ -8,7 +8,7 @@ import pandas as pd
 import requests
 import operator
 import TW_robinhood_scripts as rh
-import Robinhood
+import robin_stocks as r
 
 def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, start_date=None, end_date=None, csv_export=1, buy_and_hold=0, pickle=0, options=1):
 
@@ -72,8 +72,8 @@ def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, s
 
             # Handle outstanding shares - should be current positions
             if stock.net_shares > 0:
-                
-                requestResponse = requests.get("https://api.iextrading.com/1.0/stock/{}/price".format(stock.symbol.lower()))
+                requestResponse = requests.get("https://sandbox.iexapis.com/stable/stock/{}/price?token={}".format(stock.symbol.lower(), os.environ.get('IEX_TOKEN')))
+                # requestResponse = requests.get("https://api.iextrading.com/1.0/stock/{}/price".format(stock.symbol.lower()))
                 json = requestResponse.json()
                 last_price = float(json)
 
@@ -85,12 +85,11 @@ def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, s
                 stock.symbol += ' '
 
 
-    # INSTANTIATE ROBINHOOD my_trader #
-    my_trader = Robinhood.Robinhood()
-    logged_in = my_trader.login(username=username, password=password)
-    my_account = my_trader.get_account()['url']
+    # INSTANTIATE ROBINHOOD auth_information #
+    auth_information = r.login(username, password)
+    print(auth_information)
 
-    df_order_history, _ = rh.get_order_history(my_trader)
+    df_order_history, _ = rh.get_order_history(r)
     df_orders = df_order_history[['side', 'symbol', 'shares', 'avg_price', 'date', 'state']]
     df_orders.columns = ['side', 'symbol', 'shares', 'price', 'date', 'state']
 
@@ -129,11 +128,11 @@ def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, s
     df_pnl = pd.read_csv('stockwise_pl.csv')
 
     # Get dividends from Robinhood
-    dividends = Robinhood.Robinhood.dividends(my_trader)
+    dividends = r.get_dividends()
 
     # Put the dividends in a dataframe
     list_of_records = []
-    for each in dividends['results']:
+    for each in dividends:
         list_of_records.append(pd.DataFrame(pd.Series(each)).T)
 
     df_dividends = pd.concat(list_of_records)
@@ -231,23 +230,21 @@ def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, s
         end_date_string = end_date
 
     # Retrieve options history
+    options_pnl = 0
     if options == 1:
-        try:
-            df_options_orders_history = rh.get_all_history_options_orders(my_trader)
-            if csv_export == 1:
-                df_options_orders_history.to_csv('options_orders_history_df.csv')
-            if pickle == 1:
-                df_options_orders_history.to_pickle('df_options_orders_history')
-            options_pnl = df_options_orders_history[start_date:end_date]['value'].sum()
-        except Exception as e:
-            options_pnl = 0
+        df_options_orders_history = rh.get_all_history_options_orders(r)
+        if csv_export == 1:
+            df_options_orders_history.to_csv('options_orders_history_df.csv')
+        if pickle == 1:
+            df_options_orders_history.to_pickle('df_options_orders_history')
+        options_pnl = df_options_orders_history[start_date:end_date]['value'].sum()
 
     total_pnl = round(pnl + dividends_paid + options_pnl, 2)
 
 
     # Print final output            
     print("~~~")
-    print("From {} to {}, your total PnL is ${}".format(start_date, end_date_string, total_pnl))
+    print("From {} to {}, your total Profit/Loss is ${}".format(start_date, end_date_string, total_pnl))
     print("You've made ${} buying and selling individual equities, received ${} in dividends, and ${} on options trades".format(round(pnl,2), round(dividends_paid,2), round(options_pnl,2)))
     
     # Calculate ROI, if the user input a starting allocation
@@ -319,6 +316,6 @@ if __name__ == '__main__':
                         end_date=end_date, 
                         starting_allocation=starting_allocation, 
                         csv_export=csv_export, 
-                        buy_and_hold=1,
+                        buy_and_hold=0,
                         options=1, 
                         pickle=pickle)
