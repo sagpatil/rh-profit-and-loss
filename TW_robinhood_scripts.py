@@ -49,7 +49,7 @@ def mark_pending_orders(row):
 def get_order_history(my_trader):
     
     # Get unfiltered list of order history
-    past_orders = my_trader.get_all_orders()
+    past_orders = my_trader.get_all_stock_orders()
 
     # Load in our pickled database of instrument-url lookups
     instruments_df = pd.read_pickle('symbol_and_instrument_urls')

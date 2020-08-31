@@ -89,6 +89,25 @@ def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, s
     auth_information = r.login(username, password)
     print(auth_information)
 
+    # optionorders = df_options_orders_history
+
+    # Retrieve options history
+    start_date == 'January 1, 2020'
+    options_pnl = 0
+    if options == 1:
+        df_options_orders_history = rh.get_all_history_options_orders(r)
+
+        df_options_orders_history.to_csv('options_orders_history_df.csv')
+        if pickle == 1:
+            df_options_orders_history.to_pickle('df_options_orders_history')
+        options_pnl = df_options_orders_history[start_date:end_date]['value'].sum()
+
+        print(options_pnl)
+        open_options = r.get_all_open_option_orders()
+        for i in open_options:
+            print(i)
+
+
     df_order_history, _ = rh.get_order_history(r)
     df_orders = df_order_history[['side', 'symbol', 'shares', 'avg_price', 'date', 'state']]
     df_orders.columns = ['side', 'symbol', 'shares', 'price', 'date', 'state']
