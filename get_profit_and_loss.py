@@ -101,7 +101,8 @@ def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, s
         if pickle == 1:
             df_options_orders_history.to_pickle('df_options_orders_history')
         options_pnl = df_options_orders_history[start_date:end_date]['value'].sum()
-
+        print("*************FILE EXPORTED    ******************************\n options_orders_history_df.csv\n\n")
+        print("OPTIONS PROFIT OR LOSS :")
         print(options_pnl)
         open_options = r.get_all_open_option_orders()
         for i in open_options:
