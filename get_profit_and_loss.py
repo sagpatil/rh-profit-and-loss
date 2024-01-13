@@ -72,7 +72,7 @@ def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, s
 
             # Handle outstanding shares - should be current positions
             if stock.net_shares > 0:
-                requestResponse = requests.get("https://sandbox.iexapis.com/stable/stock/{}/price?token={}".format(stock.symbol.lower(), os.environ.get('IEX_TOKEN')))
+                requestResponse = requests.get("https://sandbox.iexapis.com/stable/stock/{}/price?token={}".format(stock.symbol.lower(), os.environ.get('IEX_TOKEN')), timeout=60)
                 # requestResponse = requests.get("https://api.iextrading.com/1.0/stock/{}/price".format(stock.symbol.lower()))
                 json = requestResponse.json()
                 last_price = float(json)
@@ -221,7 +221,7 @@ def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, s
     if buy_and_hold == 1:
 
         # Get historical price of QQQ 
-        requestResponse = requests.get("https://api.iextrading.com/1.0/stock/qqq/chart/5y")
+        requestResponse = requests.get("https://api.iextrading.com/1.0/stock/qqq/chart/5y", timeout=60)
         json = requestResponse.json()
         df_qqq = pd.DataFrame(json)
         df_qqq.index = pd.to_datetime(df_qqq['date'])
