@@ -10,7 +10,7 @@ def get_symbol_from_instrument_url(url, df):
         symbol = df.loc[url]['symbol']
     
     except Exception as e:
-        response = requests.get(url)
+        response = requests.get(url, timeout=60)
         symbol = response.json()['symbol']
         df.at[url, 'symbol'] = symbol
         # time.sleep(np.random.randint(low=0, high=2, size=(1))[0])
