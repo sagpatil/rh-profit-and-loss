@@ -9,6 +9,7 @@ import requests
 import operator
 import TW_robinhood_scripts as rh
 import robin_stocks as r
+from security import safe_requests
 
 def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, start_date=None, end_date=None, csv_export=1, buy_and_hold=0, pickle=0, options=1):
 
@@ -72,7 +73,7 @@ def rh_profit_and_loss(username=None, password=None, starting_allocation=5000, s
 
             # Handle outstanding shares - should be current positions
             if stock.net_shares > 0:
-                requestResponse = requests.get("https://sandbox.iexapis.com/stable/stock/{}/price?token={}".format(stock.symbol.lower(), os.environ.get('IEX_TOKEN')))
+                requestResponse = safe_requests.get("https://sandbox.iexapis.com/stable/stock/{}/price?token={}".format(stock.symbol.lower(), os.environ.get('IEX_TOKEN')))
                 # requestResponse = requests.get("https://api.iextrading.com/1.0/stock/{}/price".format(stock.symbol.lower()))
                 json = requestResponse.json()
                 last_price = float(json)
