@@ -1,5 +1,6 @@
-import requests
 import pandas as pd
+from security import safe_requests
+
 pd.options.mode.chained_assignment = None  # default='warn', to silence the errors about copy
 
 ### ORDER HISTORY STUFF ###
@@ -10,7 +11,7 @@ def get_symbol_from_instrument_url(url, df):
         symbol = df.loc[url]['symbol']
     
     except Exception as e:
-        response = requests.get(url)
+        response = safe_requests.get(url)
         symbol = response.json()['symbol']
         df.at[url, 'symbol'] = symbol
         # time.sleep(np.random.randint(low=0, high=2, size=(1))[0])

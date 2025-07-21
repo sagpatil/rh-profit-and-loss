@@ -16,6 +16,7 @@ import requests
 import six
 import dateutil
 import urllib
+from security import safe_requests
 
 #Application-specific imports
 try: 
@@ -191,7 +192,7 @@ class Robinhood:
         url = str(endpoints.instruments()) + str(id) + "/"
 
         try:
-            req = requests.get(url, timeout=15)
+            req = safe_requests.get(url, timeout=15)
             req.raise_for_status()
             data = req.json()
         except requests.exceptions.HTTPError:
@@ -219,7 +220,7 @@ class Robinhood:
 
         #Check for validity of symbol
         try:
-            req = requests.get(url, headers=self.headers, timeout=15)
+            req = safe_requests.get(url, headers=self.headers, timeout=15)
             req.raise_for_status()
             data = req.json()
         except requests.exceptions.HTTPError:
@@ -244,7 +245,7 @@ class Robinhood:
         url = str(endpoints.quotes()) + "?symbols=" + ",".join(stocks)
 
         try:
-            req = requests.get(url, headers=self.headers, timeout=15)
+            req = safe_requests.get(url, headers=self.headers, timeout=15)
             req.raise_for_status()
             data = req.json()
         except requests.exceptions.HTTPError:
@@ -677,7 +678,7 @@ class Robinhood:
 
         #Check for validity of symbol
         try:
-            req = requests.get(url, timeout=15)
+            req = safe_requests.get(url, timeout=15)
             req.raise_for_status()
             data = req.json()
         except requests.exceptions.HTTPError:
